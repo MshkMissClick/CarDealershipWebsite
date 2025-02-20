@@ -11,20 +11,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/cars")
 class CarController {
 
-    /** nothing. */
+    /** Обработка запроса с параметрами brand и color. */
     @GetMapping
-    public Map<String, String> getCarsByQuery(@RequestParam(required = false) String brand,
-                                              @RequestParam(required = false) String color) {
+    public Map<String, String> getCarsByQuery(
+            @RequestParam(required = false, defaultValue = "any") String brand,
+            @RequestParam(required = false, defaultValue = "any") String color
+    ) {
         return Map.of(
-                "brand", brand != null ? brand : "any",
-                "color", color != null ? color : "any"
+                "brand", brand,
+                "color", color
         );
     }
 
-    /** nothing. */
+    /** Обработка запроса с переменной пути brand. */
     @GetMapping("/{brand}")
     public Map<String, String> getCarByBrand(@PathVariable String brand) {
         return Map.of("brand", brand, "message", "Car details for " + brand);
     }
-
 }

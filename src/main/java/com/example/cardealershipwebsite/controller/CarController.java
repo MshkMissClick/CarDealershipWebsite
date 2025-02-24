@@ -1,6 +1,7 @@
 package com.example.cardealershipwebsite.controller;
 
-import java.util.Map;
+import com.example.cardealershipwebsite.model.Car;
+import com.example.cardealershipwebsite.service.CarService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,21 +13,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/cars")
 class CarController {
 
-    /** Обработка запроса с параметрами brand и color. */
-    @GetMapping
-    public Map<String, String> getCarsByQuery(
-            @RequestParam(required = false, defaultValue = "any") String brand,
-            @RequestParam(required = false, defaultValue = "any") String color
-    ) {
-        return Map.of(
-                "brand", brand,
-                "color", color
-        );
+    private final CarService carService;
+
+    public CarController(CarService carService) {
+
+        this.carService = carService;
     }
 
-    /** Обработка запроса с переменной пути brand. */
-    @GetMapping("/{brand}")
-    public Map<String, String> getCarByBrand(@PathVariable String brand) {
-        return Map.of("brand", brand, "message", "Car details for " + brand);
+    /** Path params. */
+    @GetMapping("/{id}")
+    public Car getCarById(@PathVariable Long id) {
+        return carService.getCarById(id);
+    }
+
+    /** Query prams. */
+    @GetMapping("/info")
+    public Car getCarByNameAndColor(@RequestParam String name, @RequestParam String color) {
+        return carService.getCarByNameAndColor(name, color);
     }
 }

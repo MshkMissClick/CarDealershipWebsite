@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CarController {
     private final CarService carService;
 
+    /**Конструктор.*/
     public CarController(CarService carService) {
         this.carService = carService;
     }
@@ -28,21 +29,25 @@ public class CarController {
         return carService.getAllCars();
     }
 
+    /**Получить по ID.*/
     @GetMapping("/{id}")
     public ResponseEntity<Car> getCarById(@PathVariable Long id) {
         return ResponseEntity.of(carService.getCarById(id));
     }
 
+    /**Создать машину.*/
     @PostMapping
     public Car createCar(@RequestBody Car car) {
         return carService.createCar(car);
     }
 
+    /**Обновить данные о машине.*/
     @PutMapping("/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody Car car) {
         return ResponseEntity.of(carService.updateCar(id, car));
     }
 
+    /**Удалить машину.*/
     @DeleteMapping("/{id}")
     public void deleteCar(@PathVariable Long id) {
         carService.deleteCar(id);

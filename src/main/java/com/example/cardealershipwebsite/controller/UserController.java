@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**UserController.*/
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
 
+    /**Конструктор.*/
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -27,21 +29,25 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    /**Получить пользователя по ID.*/
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return ResponseEntity.of(userService.getUserById(id));
     }
 
+    /**Создать пользователя.*/
     @PostMapping
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
 
+    /**Обновить пользователя.*/
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         return ResponseEntity.of(userService.updateUser(id, user));
     }
 
+    /**Удалить пользователя.*/
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);

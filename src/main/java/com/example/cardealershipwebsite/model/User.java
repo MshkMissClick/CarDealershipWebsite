@@ -43,7 +43,7 @@ public class User {
     @JoinColumn(name = "user_id")
     private List<Car> favorites;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "orders",
             joinColumns = @JoinColumn(name = "user_id"),

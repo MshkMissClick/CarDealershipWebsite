@@ -11,7 +11,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Model. */
+/** Car Model. */
 @Entity
 @Table(name = "cars")
 @Getter
@@ -58,8 +58,8 @@ public class Car {
     private double price;
 
     @Column(nullable = false)
-    private boolean availableInSalon;
+    private int quantityInStock;
 
-    @ManyToMany(mappedBy = "favorites")
-    private List<User> likedByUsers;
+    @ManyToMany(mappedBy = "orders")
+    private List<User> usersWhoOrdered;
 }

@@ -1,46 +1,151 @@
 package com.example.cardealershipwebsite.service;
 
+import com.example.cardealershipwebsite.dto.UserDto;
+import com.example.cardealershipwebsite.mapper.UserMapper;
+import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
+import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/** Service. */
+/** User Service. */
 @Service
+@RequiredArgsConstructor
 public class UserService {
+    private static final String USER_NOT_FOUND_MESSAGE = "Пользователь не найден";
+    private static final String CAR_NOT_FOUND_MESSAGE = "Машина не найдена";
+
     private final UserRepository userRepository;
+    private final CarRepository carRepository;
+    private final UserMapper userMapper;
 
-    /**Конструктор.*/
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    /** Получить всех пользователей в виде DTO. */
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    /** Получить пользователя по ID. */
+    public Optional<UserDto> getUserById(Long id) {
+        return userRepository.findById(id).map(userMapper::toDto);
     }
 
-    /**Получить пользователя по ID.*/
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
+    /** Создать пользователя. */
+    @Transactional
+    public UserDto createUser(UserDto userDto) {
+        User user = userMapper.toEntity(userDto);
+        user = userRepository.save(user);
+        return userMapper.toDto(user);
     }
 
-    /**Создать пользователя.*/
-    public User createUser(User user) {
-        return userRepository.save(user);
+    /** Обновить пользователя. */
+    @Transactional
+    public Optional<UserDto> updateUser(Long id, UserDto userDto) {
+        return userRepository.findById(id).map(existingUser -> {
+            existingUser.setName(userDto.getName());
+            existingUser.setEmail(userDto.getEmail());
+            if (userDto.getPasswordHash() != null) {
+                existingUser.setPasswordHash(userDto.getPasswordHash());
+            }
+
+            // Обновляем избранные машины
+            if (userDto.getFavoriteCarIds() != null) {
+                List<Car> favoriteCars = carRepository.findAllById(userDto.getFavoriteCarIds());
+                existingUser.setFavorites(favoriteCars);
+            }
+
+            // Обновляем заказанные машины
+            if (userDto.getOrderCarIds() != null) {
+                List<Car> orderCars = carRepository.findAllById(userDto.getOrderCarIds());
+                existingUser.setOrders(orderCars);
+            }
+
+            userRepository.save(existingUser);
+            return userMapper.toDto(existingUser);
+        });
     }
 
-    /**Обновить пользователя.*/
-    public Optional<User> updateUser(Long id, User user) {
-        if (!userRepository.existsById(id)) {
-            return Optional.empty();
-        }
-        user.setId(id);
-        return Optional.of(userRepository.save(user));
-    }
-
-    /**Удалить пользователя.*/
+    /** Удалить пользователя. */
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    /** Получение айди машин. */
+    public List<Long> getUserOrderCarIds(Long userId) {
+        return userRepository.findUserOrderCarIds(userId);
+    }
+
+    /** Добавление машины. */
+    @Transactional
+    public Optional<UserDto> addCarToOrders(Long userId, Long carId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<Car> carOptional = carRepository.findById(carId);
+
+        if (userOptional.isPresent() && carOptional.isPresent()) {
+            User user = userOptional.get();
+            Car car = carOptional.get();
+
+            // Проверяем, есть ли уже эта машина в заказах
+            if (!user.getOrders().contains(car)) {
+                user.getOrders().add(car); // Добавляем машину в список заказов
+                userRepository.save(user);  // Сохраняем обновленного пользователя
+            }
+            return Optional.of(userMapper.toDto(user));
+        }
+        return Optional.empty();  // Возвращаем пустой Optional, если пользователь или машина не найдены
+    }
+
+    /** Удалить машину из заказов пользователя. */
+    @Transactional
+    public Optional<UserDto> removeCarFromOrders(Long userId, Long carId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<Car> carOptional = carRepository.findById(carId);
+
+        if (userOptional.isPresent() && carOptional.isPresent()) {
+            User user = userOptional.get();
+            Car car = carOptional.get();
+
+            // Удаляем машину из списка заказов
+            user.getOrders().remove(car);
+            userRepository.save(user);  // Сохраняем обновленного пользователя
+            return Optional.of(userMapper.toDto(user));
+        }
+        return Optional.empty();  // Возвращаем пустой Optional, если пользователь или машина не найдены
+    }
+
+    /** Получить ID всех машин в избранном у пользователя. */
+    public List<Long> getFavoriteCarIds(Long userId) {
+        return userRepository.findById(userId)
+                .map(user -> user.getFavorites().stream().map(Car::getId).toList())
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
+    }
+
+    /** Добавить машину в избранное. */
+    @Transactional
+    public void addCarToFavorites(Long userId, Long carId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE));
+
+        if (!user.getFavorites().contains(car)) {
+            user.getFavorites().add(car);
+            userRepository.save(user);
+        }
+    }
+
+    /** Удалить машину из избранного. */
+    @Transactional
+    public void removeCarFromFavorites(Long userId, Long carId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
+        user.getFavorites().removeIf(car -> car.getId().equals(carId));
+        userRepository.save(user);
     }
 }

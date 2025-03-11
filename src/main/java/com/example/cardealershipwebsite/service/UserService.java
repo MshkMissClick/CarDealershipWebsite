@@ -101,6 +101,7 @@ public class UserService {
         return Optional.empty();  // Возвращаем пустой Optional, если пользователь или машина не найдены
     }
 
+
     /** Удалить машину из заказов пользователя. */
     @Transactional
     public Optional<UserDto> removeCarFromOrders(Long userId, Long carId) {
@@ -145,7 +146,9 @@ public class UserService {
     public void removeCarFromFavorites(Long userId, Long carId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
-        user.getFavorites().removeIf(car -> car.getId().equals(carId));
+        Car carToRemove = carRepository.findById(carId)
+                .orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE));
+        user.getFavorites().remove(carToRemove);
         userRepository.save(user);
     }
 }

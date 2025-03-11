@@ -25,6 +25,7 @@ public class UserMapper {
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
+        dto.setPasswordHash(user.getPasswordHash());
         dto.setCreatedAt(user.getCreatedAt());
 
         if (user.getOrders() != null) {
@@ -52,6 +53,7 @@ public class UserMapper {
         user.setId(dto.getId());
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
+        user.setPasswordHash(dto.getPasswordHash());
         user.setCreatedAt(dto.getCreatedAt());
 
         // Здесь мы используем репозиторий для поиска машин по их id

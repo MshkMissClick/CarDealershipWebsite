@@ -72,8 +72,13 @@ public class UserService {
     }
 
     /** Удалить пользователя. */
+    @Transactional
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        userRepository.findById(id).ifPresent(user -> {
+            user.getOrders().clear();  // Удаляем связи ManyToMany с машинами
+            user.getFavorites().clear(); // Удаляем связи OneToMany с избранными машинами
+            userRepository.delete(user); // Теперь удаляем пользователя
+        });
     }
 
     /** Получение айди машин. */

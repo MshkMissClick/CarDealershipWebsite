@@ -6,6 +6,7 @@ import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -55,8 +56,13 @@ public class CarService {
     }
 
     /** Удалить машину по ID. */
+    @Transactional
     public void deleteCar(Long id) {
-        carRepository.deleteById(id);
+        carRepository.findById(id).ifPresent(car -> {
+            // Удаляем машину из заказов всех пользователей
+            car.getUsersWhoOrdered().forEach(user -> user.getOrders().remove(car));
+            carRepository.delete(car); // Теперь удаляем саму машину
+        });
     }
 
     /** Получение айди юзера. */

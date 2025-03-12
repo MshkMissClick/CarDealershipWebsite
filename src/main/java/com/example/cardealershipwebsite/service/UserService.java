@@ -71,6 +71,8 @@ public class UserService {
         });
     }
 
+
+
     /** Удалить пользователя. */
     @Transactional
     public void deleteUser(Long id) {

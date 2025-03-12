@@ -61,13 +61,11 @@ public class UserService {
                 existingUser.setPasswordHash(userDto.getPasswordHash());
             }
 
-            // Обновляем избранные машины
             if (userDto.getFavoriteCarIds() != null) {
                 List<Car> favoriteCars = carRepository.findAllById(userDto.getFavoriteCarIds());
                 existingUser.setFavorites(favoriteCars);
             }
 
-            // Обновляем заказанные машины
             if (userDto.getOrderCarIds() != null) {
                 List<Car> orderCars = carRepository.findAllById(userDto.getOrderCarIds());
                 existingUser.setOrders(orderCars);
@@ -105,14 +103,13 @@ public class UserService {
             User user = userOptional.get();
             Car car = carOptional.get();
 
-            // Проверяем, есть ли уже эта машина в заказах
             if (!user.getOrders().contains(car)) {
-                user.getOrders().add(car); // Добавляем машину в список заказов
-                userRepository.save(user);  // Сохраняем обновленного пользователя
+                user.getOrders().add(car);
+                userRepository.save(user);
             }
             return Optional.of(userMapper.toDto(user));
         }
-        return Optional.empty();  // Возвращаем пустой Optional, если пользователь или машина не найдены
+        return Optional.empty();
     }
 
 
@@ -126,12 +123,11 @@ public class UserService {
             User user = userOptional.get();
             Car car = carOptional.get();
 
-            // Удаляем машину из списка заказов
             user.getOrders().remove(car);
-            userRepository.save(user);  // Сохраняем обновленного пользователя
+            userRepository.save(user);
             return Optional.of(userMapper.toDto(user));
         }
-        return Optional.empty();  // Возвращаем пустой Optional, если пользователь или машина не найдены
+        return Optional.empty();
     }
 
     /** Получить ID всех машин в избранном у пользователя. */

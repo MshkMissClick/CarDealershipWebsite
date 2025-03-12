@@ -59,18 +59,17 @@ public class CarService {
     @Transactional
     public void deleteCar(Long id) {
         carRepository.findById(id).ifPresent(car -> {
-            // Удаляем машину из заказов всех пользователей
             car.getUsersWhoOrdered().forEach(user -> user.getOrders().remove(car));
-            carRepository.delete(car); // Теперь удаляем саму машину
+            carRepository.delete(car);
         });
     }
 
     /** Получение айди юзера. */
     public List<Long> getUserIdsWithCarInOrders(Long carId) {
-        return userRepository.findAll().stream()  // Ищем всех пользователей
-                .filter(user -> user.getOrders().stream()  // Фильтруем пользователей, у которых есть эта машина в заказах
+        return userRepository.findAll().stream()
+                .filter(user -> user.getOrders().stream()
                         .anyMatch(car -> car.getId().equals(carId)))
-                .map(User::getId)  // Возвращаем только ID пользователей
+                .map(User::getId)
                 .toList();
     }
 

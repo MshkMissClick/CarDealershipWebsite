@@ -46,13 +46,13 @@ public class CarService {
     }
 
     /** Обновить данные машины. */
+    @Transactional
     public Optional<CarDto> updateCar(Long id, CarDto carDto) {
-        if (!carRepository.existsById(id)) {
-            return Optional.empty(); // Если машина с таким ID не существует
-        }
-        Car car = carMapper.toEntity(carDto);
-        car.setId(id);
-        return Optional.of(carMapper.toDto(carRepository.save(car)));
+        return carRepository.findById(id).map(existingCar -> {
+            updateCarAttributes(existingCar, carDto);
+            carRepository.save(existingCar);
+            return carMapper.toDto(existingCar);
+        });
     }
 
     /** Удалить машину по ID. */
@@ -72,5 +72,65 @@ public class CarService {
                         .anyMatch(car -> car.getId().equals(carId)))
                 .map(User::getId)  // Возвращаем только ID пользователей
                 .toList();
+    }
+
+    /** Обновление атрибутов машины. */
+    private void updateCarAttributes(Car car, CarDto carDto) {
+        if (carDto.getName() != null) {
+            car.setName(carDto.getName());
+        }
+
+        if (carDto.getBodyType() != null) {
+            car.setBodyType(carDto.getBodyType());
+        }
+
+        if (carDto.getColor() != null) {
+            car.setColor(carDto.getColor());
+        }
+
+        if (carDto.getFuelType() != null) {
+            car.setFuelType(carDto.getFuelType());
+        }
+
+        if (carDto.getPower() != 0) {
+            car.setPower(carDto.getPower());
+        }
+
+        if (carDto.getEngineVolume() != 0) {
+            car.setEngineVolume(carDto.getEngineVolume());
+        }
+
+        if (carDto.getFuelConsumption() != 0) {
+            car.setFuelConsumption(carDto.getFuelConsumption());
+        }
+
+        if (carDto.getCylinders() != 0) {
+            car.setCylinders(carDto.getCylinders());
+        }
+
+        if (carDto.getMaxSpeed() != 0) {
+            car.setMaxSpeed(carDto.getMaxSpeed());
+        }
+
+        if (carDto.getAcceleration() != 0) {
+            car.setAcceleration(carDto.getAcceleration());
+        }
+
+        if (carDto.getTrunkVolume() != 0) {
+            car.setTrunkVolume(carDto.getTrunkVolume());
+        }
+
+        if (carDto.getPrice() != 0) {
+            car.setPrice(carDto.getPrice());
+        }
+
+        if (carDto.getQuantityInStock() != 0) {
+            car.setQuantityInStock(carDto.getQuantityInStock());
+        }
+
+        if (carDto.getUsersWhoOrderedIds() != null) {
+            List<User> users = userRepository.findAllById(carDto.getUsersWhoOrderedIds());
+            car.setUsersWhoOrdered(users);
+        }
     }
 }

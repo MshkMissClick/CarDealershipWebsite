@@ -48,8 +48,15 @@ public class UserService {
     @Transactional
     public Optional<UserDto> updateUser(Long id, UserDto userDto) {
         return userRepository.findById(id).map(existingUser -> {
-            existingUser.setName(userDto.getName());
-            existingUser.setEmail(userDto.getEmail());
+
+            if (userDto.getName() != null) {
+                existingUser.setName(userDto.getName());
+            }
+
+            if (userDto.getEmail() != null) {
+                existingUser.setEmail(userDto.getEmail());
+            }
+
             if (userDto.getPasswordHash() != null) {
                 existingUser.setPasswordHash(userDto.getPasswordHash());
             }

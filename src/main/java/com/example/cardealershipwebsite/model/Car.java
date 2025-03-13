@@ -2,12 +2,14 @@ package com.example.cardealershipwebsite.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,8 +23,14 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+    @Column(nullable = false)
+    private String brand;
+
+    @Column(nullable = false)
+    private String model;
+
+    @Column(nullable = false)
+    private Integer year;
 
     @Column(nullable = false)
     private String bodyType;
@@ -30,11 +38,14 @@ public class Car {
     @Column(nullable = false)
     private String color;
 
-    @Column(nullable = false)
-    private String fuelType;
+    @Enumerated(EnumType.STRING)
+    private Transmission transmission;
+
+    @Enumerated(EnumType.STRING)
+    private FuelType fuelType;
 
     @Column(nullable = false)
-    private int power;
+    private Integer power;
 
     @Column(nullable = false)
     private double engineVolume;
@@ -43,23 +54,12 @@ public class Car {
     private double fuelConsumption;
 
     @Column(nullable = false)
-    private int cylinders;
-
-    @Column(nullable = false)
-    private int maxSpeed;
-
-    @Column(nullable = false)
-    private double acceleration;
-
-    @Column(nullable = false)
-    private int trunkVolume;
+    private Integer trunkVolume;
 
     @Column(nullable = false)
     private double price;
 
-    @Column(nullable = false)
-    private int quantityInStock;
-
-    @ManyToMany(mappedBy = "orders")
-    private List<User> usersWhoOrdered;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User userWhoOrdered;
 }

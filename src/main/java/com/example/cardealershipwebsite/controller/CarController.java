@@ -56,12 +56,14 @@ public class CarController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Получить список ID пользователей, у которых эта машина в заказах. */
-    @GetMapping("/{id}/users")
-    public ResponseEntity<List<Long>> getUserIdsWithCarInOrders(@PathVariable Long id) {
-        List<Long> userIds = carService.getUserIdsWithCarInOrders(id);
-        return ResponseEntity.ok(userIds);
+    /** Получить ID пользователя, у которого эта машина в заказах. */
+    @GetMapping("/{id}/user")
+    public ResponseEntity<Long> getUserIdsWithCarInOrders(@PathVariable Long id) {
+        Long userId = carService.getUserIdWhoOrderedCar(id).orElse(null);
+        if (userId == null) {
+            return ResponseEntity.notFound().build(); // Если пользователь не найден
+        }
+        return ResponseEntity.ok(userId);
     }
-
 
 }

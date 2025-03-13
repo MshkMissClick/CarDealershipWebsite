@@ -10,155 +10,155 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** User Service. */
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private static final String USER_NOT_FOUND_MESSAGE = "Пользователь не найден";
-    private static final String CAR_NOT_FOUND_MESSAGE = "Машина не найдена";
-
     private final UserRepository userRepository;
     private final CarRepository carRepository;
     private final UserMapper userMapper;
 
-    /** Получить всех пользователей в виде DTO. */
+
     public List<UserDto> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toDto)
-                .toList();
+        return userRepository.findAll().stream().map(userMapper::toDto).toList();
     }
 
-    /** Получить пользователя по ID. */
+    /**Получить юзера по айди. */
     public Optional<UserDto> getUserById(Long id) {
         return userRepository.findById(id).map(userMapper::toDto);
     }
 
-    /** Создать пользователя. */
-    @Transactional
+    /** Создать юзера. */
     public UserDto createUser(UserDto userDto) {
-        User user = userMapper.toEntity(userDto);
-        user = userRepository.save(user);
-        return userMapper.toDto(user);
+        User user = new User();
+        user.setName(userDto.getName());
+        user.setEmail(userDto.getEmail());
+        user.setPasswordHash(userDto.getPasswordHash());
+        return userMapper.toDto(userRepository.save(user));
     }
 
-    /** Обновить пользователя. */
-    @Transactional
+    /** Обновление юзера.*/
     public Optional<UserDto> updateUser(Long id, UserDto userDto) {
-        return userRepository.findById(id).map(existingUser -> {
-
+        return userRepository.findById(id).map(user -> {
             if (userDto.getName() != null) {
-                existingUser.setName(userDto.getName());
+                user.setName(userDto.getName());
             }
-
             if (userDto.getEmail() != null) {
-                existingUser.setEmail(userDto.getEmail());
+                user.setEmail(userDto.getEmail());
             }
-
             if (userDto.getPasswordHash() != null) {
-                existingUser.setPasswordHash(userDto.getPasswordHash());
+                user.setPasswordHash(userDto.getPasswordHash());
             }
-
-            if (userDto.getFavoriteCarIds() != null) {
-                List<Car> favoriteCars = carRepository.findAllById(userDto.getFavoriteCarIds());
-                existingUser.setFavorites(favoriteCars);
-            }
-
-            if (userDto.getOrderCarIds() != null) {
-                List<Car> orderCars = carRepository.findAllById(userDto.getOrderCarIds());
-                existingUser.setOrders(orderCars);
-            }
-
-            userRepository.save(existingUser);
-            return userMapper.toDto(existingUser);
+            return userMapper.toDto(userRepository.save(user));
         });
     }
 
-
-
-    /** Удалить пользователя. */
-    @Transactional
+    /** Удаление юзера. */
     public void deleteUser(Long id) {
-        userRepository.findById(id).ifPresent(user -> {
-            user.getOrders().clear();  // Удаляем связи ManyToMany с машинами
-            user.getFavorites().clear(); // Удаляем связи OneToMany с избранными машинами
-            userRepository.delete(user); // Теперь удаляем пользователя
-        });
+        userRepository.deleteById(id);
     }
 
-    /** Получение айди машин. */
+    /** Получить заказы пользователя. */
     public List<Long> getUserOrderCarIds(Long userId) {
-        return userRepository.findUserOrderCarIds(userId);
+        return userRepository.findById(userId)
+                .map(user -> user.getOrders().stream().map(Car::getId).toList())
+                .orElse(List.of());
     }
 
-    /** Добавление машины. */
-    @Transactional
+    /** Добавить машину в заказы пользователя. */
     public Optional<UserDto> addCarToOrders(Long userId, Long carId) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        Optional<Car> carOptional = carRepository.findById(carId);
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Car> carOpt = carRepository.findById(carId);
 
-        if (userOptional.isPresent() && carOptional.isPresent()) {
-            User user = userOptional.get();
-            Car car = carOptional.get();
-
-            if (!user.getOrders().contains(car)) {
-                user.getOrders().add(car);
-                userRepository.save(user);
-            }
-            return Optional.of(userMapper.toDto(user));
+        if (userOpt.isEmpty() || carOpt.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
-    }
 
+        User user = userOpt.get();
+        Car car = carOpt.get();
+
+        // Проверка, что у машины нет заказчика
+        if (car.getUserWhoOrdered() != null) {
+            throw new IllegalStateException("У машины уже есть заказчик.");
+
+        }
+
+        car.setUserWhoOrdered(user);
+        user.getOrders().add(car);
+
+        carRepository.save(car);
+        userRepository.save(user);
+
+        return Optional.of(userMapper.toDto(user));
+    }
 
     /** Удалить машину из заказов пользователя. */
-    @Transactional
     public Optional<UserDto> removeCarFromOrders(Long userId, Long carId) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        Optional<Car> carOptional = carRepository.findById(carId);
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Car> carOpt = carRepository.findById(carId);
 
-        if (userOptional.isPresent() && carOptional.isPresent()) {
-            User user = userOptional.get();
-            Car car = carOptional.get();
-
-            user.getOrders().remove(car);
-            userRepository.save(user);
-            return Optional.of(userMapper.toDto(user));
+        if (userOpt.isEmpty() || carOpt.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        User user = userOpt.get();
+        Car car = carOpt.get();
+
+        if (!user.getOrders().contains(car)) {
+            return Optional.empty();
+        }
+
+        car.setUserWhoOrdered(null);
+        user.getOrders().remove(car);
+
+        carRepository.save(car);
+        userRepository.save(user);
+
+        return Optional.of(userMapper.toDto(user));
     }
 
-    /** Получить ID всех машин в избранном у пользователя. */
+    /** Получить избранные машины пользователя. */
     public List<Long> getFavoriteCarIds(Long userId) {
         return userRepository.findById(userId)
                 .map(user -> user.getFavorites().stream().map(Car::getId).toList())
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
+                .orElse(List.of());
     }
 
     /** Добавить машину в избранное. */
-    @Transactional
     public void addCarToFavorites(Long userId, Long carId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE));
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Car> carOpt = carRepository.findById(carId);
+
+        if (userOpt.isEmpty() || carOpt.isEmpty()) {
+            throw new IllegalArgumentException("Пользователь или машина не найдены.");
+        }
+
+        User user = userOpt.get();
+        Car car = carOpt.get();
 
         if (!user.getFavorites().contains(car)) {
             user.getFavorites().add(car);
             userRepository.save(user);
         }
+
     }
 
     /** Удалить машину из избранного. */
-    @Transactional
     public void removeCarFromFavorites(Long userId, Long carId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
-        Car carToRemove = carRepository.findById(carId)
-                .orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE));
-        user.getFavorites().remove(carToRemove);
-        userRepository.save(user);
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Car> carOpt = carRepository.findById(carId);
+
+        if (userOpt.isEmpty() || carOpt.isEmpty()) {
+            throw new IllegalArgumentException("Пользователь или машина не найдены.");
+        }
+
+        User user = userOpt.get();
+        Car car = carOpt.get();
+
+        if (user.getFavorites().contains(car)) {
+            user.getFavorites().remove(car);
+            userRepository.save(user);
+        }
     }
 }

@@ -62,12 +62,12 @@ public class UserController {
     @PostMapping("/{id}/orders/{carId}")
     public ResponseEntity<UserDto> addCarToOrders(@PathVariable Long id, @PathVariable Long carId) {
         return ResponseEntity.of(userService.addCarToOrders(id, carId));
-    }
+    } //Добавить проверку на наличие у существующей машины заказчика
 
     /** Удалить машину из заказов пользователя. */
-    @DeleteMapping("/{id}/orders/{carId}")
-    public ResponseEntity<UserDto> removeCarFromOrders(@PathVariable Long id, @PathVariable Long carId) {
-        return ResponseEntity.of(userService.removeCarFromOrders(id, carId));
+    @DeleteMapping("/{id}/orders/{orderId}")
+    public ResponseEntity<UserDto> removeCarFromOrders(@PathVariable Long id, @PathVariable Long orderId) {
+        return ResponseEntity.of(userService.removeCarFromOrders(id, orderId));
     }
 
     /** Получить ID всех машин в избранном у пользователя. */

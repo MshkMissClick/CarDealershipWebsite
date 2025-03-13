@@ -1,19 +1,15 @@
 package com.example.cardealershipwebsite.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-/** UserDto. */
-@Getter
-@Setter
+/** User Dto. */
+@Data
 public class UserDto {
     private Long id;
     private String name;
     private String email;
-    private String passwordHash; // Можно убрать, если не нужен в DTO
-    private LocalDateTime createdAt;
+    private String passwordHash;
     private List<Long> orderCarIds;
     private List<Long> favoriteCarIds;
 }

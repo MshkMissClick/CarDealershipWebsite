@@ -6,130 +6,106 @@ import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /** Car Service. */
 @Service
+@RequiredArgsConstructor
 public class CarService {
-
     private final CarRepository carRepository;
-    private final CarMapper carMapper;
     private final UserRepository userRepository;
+    private final CarMapper carMapper;
 
-    /** Конструктор. */
-    public CarService(CarRepository carRepository, CarMapper carMapper, UserRepository userRepository) {
-        this.carRepository = carRepository;
-        this.carMapper = carMapper;
-        this.userRepository = userRepository;
-    }
-
-    /** Получить все машины в виде DTO. */
     public List<CarDto> getAllCars() {
-        return carRepository.findAll()
-                .stream()
-                .map(carMapper::toDto)
-                .toList();
+        return carRepository.findAll().stream().map(carMapper::toDto).toList();
     }
 
-    /** Получить машину по ID. */
+    /** Получение машин по айди. */
     public Optional<CarDto> getCarById(Long id) {
         return carRepository.findById(id).map(carMapper::toDto);
     }
 
-    /** Создать машину. */
+    /** Создание машины. */
     public CarDto createCar(CarDto carDto) {
         Car car = carMapper.toEntity(carDto);
+        if (carDto.getUserWhoOrderedId() != null) {
+            User user = userRepository.findById(carDto.getUserWhoOrderedId()).orElseThrow(() -> new RuntimeException("User not found"));
+            car.setUserWhoOrdered(user);
+        }
         return carMapper.toDto(carRepository.save(car));
     }
 
-    /** Обновить данные машины. */
-    @Transactional
+    /** Обновление машины. */
     public Optional<CarDto> updateCar(Long id, CarDto carDto) {
-        return carRepository.findById(id).map(existingCar -> {
-            updateCarAttributes(existingCar, carDto);
-            carRepository.save(existingCar);
-            return carMapper.toDto(existingCar);
+        return carRepository.findById(id).map(car -> {
+            updateCarAttributes(car, carDto);
+            return carMapper.toDto(carRepository.save(car));
         });
     }
 
-    /** Удалить машину по ID. */
-    @Transactional
+    /** Удаление машины. */
     public void deleteCar(Long id) {
         carRepository.findById(id).ifPresent(car -> {
-            car.getUsersWhoOrdered().forEach(user -> user.getOrders().remove(car));
-            carRepository.delete(car);
+            // Убираем машину из заказов пользователей
+            if (car.getUserWhoOrdered() != null) {
+                car.getUserWhoOrdered().getOrders().remove(car);
+            }
+
+            // Убираем машину из избранного у всех пользователей
+            List<User> usersWithCarInFavorites = userRepository.findAllByFavoritesContains(car);
+            usersWithCarInFavorites.forEach(user -> user.getFavorites().remove(car));
+            userRepository.saveAll(usersWithCarInFavorites);
+
+            carRepository.deleteById(id);
         });
     }
 
-    /** Получение айди юзера. */
-    public List<Long> getUserIdsWithCarInOrders(Long carId) {
-        return userRepository.findAll().stream()
-                .filter(user -> user.getOrders().stream()
-                        .anyMatch(car -> car.getId().equals(carId)))
-                .map(User::getId)
-                .toList();
+    /** Получает ID пользователя, заказавшего указанную машину. */
+    public Optional<Long> getUserIdWhoOrderedCar(Long carId) {
+        return carRepository.findById(carId)
+                .map(car -> car.getUserWhoOrdered() != null ? car.getUserWhoOrdered().getId() : null);
     }
 
     /** Обновление атрибутов машины. */
     private void updateCarAttributes(Car car, CarDto carDto) {
-        if (carDto.getName() != null) {
-            car.setName(carDto.getName());
+        if (carDto.getBrand() != null) {
+            car.setBrand(carDto.getBrand());
         }
-
+        if (carDto.getModel() != null) {
+            car.setModel(carDto.getModel());
+        }
+        if (carDto.getYear() != null) {
+            car.setYear(carDto.getYear());
+        }
         if (carDto.getBodyType() != null) {
             car.setBodyType(carDto.getBodyType());
         }
-
         if (carDto.getColor() != null) {
             car.setColor(carDto.getColor());
         }
-
+        if (carDto.getTransmission() != null) {
+            car.setTransmission(carDto.getTransmission());
+        }
         if (carDto.getFuelType() != null) {
             car.setFuelType(carDto.getFuelType());
         }
-
         if (carDto.getPower() != 0) {
             car.setPower(carDto.getPower());
         }
-
         if (carDto.getEngineVolume() != 0) {
             car.setEngineVolume(carDto.getEngineVolume());
         }
-
         if (carDto.getFuelConsumption() != 0) {
             car.setFuelConsumption(carDto.getFuelConsumption());
         }
-
-        if (carDto.getCylinders() != 0) {
-            car.setCylinders(carDto.getCylinders());
-        }
-
-        if (carDto.getMaxSpeed() != 0) {
-            car.setMaxSpeed(carDto.getMaxSpeed());
-        }
-
-        if (carDto.getAcceleration() != 0) {
-            car.setAcceleration(carDto.getAcceleration());
-        }
-
         if (carDto.getTrunkVolume() != 0) {
             car.setTrunkVolume(carDto.getTrunkVolume());
         }
-
         if (carDto.getPrice() != 0) {
             car.setPrice(carDto.getPrice());
-        }
-
-        if (carDto.getQuantityInStock() != 0) {
-            car.setQuantityInStock(carDto.getQuantityInStock());
-        }
-
-        if (carDto.getUsersWhoOrderedIds() != null) {
-            List<User> users = userRepository.findAllById(carDto.getUsersWhoOrderedIds());
-            car.setUsersWhoOrdered(users);
         }
     }
 }

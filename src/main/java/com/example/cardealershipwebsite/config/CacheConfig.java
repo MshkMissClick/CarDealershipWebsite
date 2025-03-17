@@ -13,8 +13,8 @@ public class CacheConfig {
 
     /** Hash map for cache. */
     @Bean
-    public LinkedHashMap<String, List<CarDto>> carFilterCache() {
-        return new LinkedHashMap<String, List<CarDto>>(16, 0.75f, true) {
+    public Map<String, List<CarDto>> carFilterCache() {
+        return new LinkedHashMap<>(16, 0.75f, true) {
             private static final int MAX_ENTRIES = 10;
 
             @Override

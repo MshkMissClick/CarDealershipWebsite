@@ -6,6 +6,8 @@ import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +32,15 @@ public class UserService {
     }
 
     /** Создать юзера. */
-    public UserDto createUser(UserDto userDto) {
+    public UserDto createUser(UserDto userDto) throws NoSuchAlgorithmException {
         User user = new User();
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
-        user.setPasswordHash(userDto.getPasswordHash());
+
+        // Хэшируем пароль перед сохранением
+        String hashedPassword = hashPassword(userDto.getPasswordHash());
+        user.setPasswordHash(hashedPassword);
+
         return userMapper.toDto(userRepository.save(user));
     }
 
@@ -47,8 +53,8 @@ public class UserService {
             if (userDto.getEmail() != null) {
                 user.setEmail(userDto.getEmail());
             }
-            if (userDto.getPasswordHash() != null) {
-                user.setPasswordHash(userDto.getPasswordHash());
+            if (user.getPasswordHash() != null) {
+                user.setPasswordHash(user.getPasswordHash());
             }
             return userMapper.toDto(userRepository.save(user));
         });
@@ -161,4 +167,15 @@ public class UserService {
             userRepository.save(user);
         }
     }
+
+    private String hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256"); // используем SHA-256
+        byte[] hashBytes = digest.digest(password.getBytes());
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            hexString.append(String.format("%02x", b)); // преобразуем байты в строку в шестнадцатеричном формате
+        }
+        return hexString.toString();
+    }
+
 }

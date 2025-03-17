@@ -2,6 +2,7 @@ package com.example.cardealershipwebsite.controller;
 
 import com.example.cardealershipwebsite.dto.UserDto;
 import com.example.cardealershipwebsite.service.UserService;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class UserController {
 
     /** Создать пользователя. */
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto)  throws NoSuchAlgorithmException {
         return ResponseEntity.ok(userService.createUser(userDto));
     }
 

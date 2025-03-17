@@ -20,5 +20,5 @@ public class CarDto {
     private double fuelConsumption;
     private int trunkVolume;
     private double price;
-    private Long userWhoOrderedId; // Может быть null
+    private DisplayUserDto userWhoOrdered; // Может быть null
 }

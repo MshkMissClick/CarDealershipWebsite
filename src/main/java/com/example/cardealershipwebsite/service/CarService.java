@@ -8,8 +8,8 @@ import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class CarService {
     private final UserRepository userRepository;
     private final CarMapper carMapper;
     private final BrandRepository brandRepository;
-    private final HashMap<String, List<CarDto>> carFilterCache;
+    private final Map<String, List<CarDto>> carFilterCache;
 
     public List<CarDto> getAllCars() {
         return carRepository.findAll().stream().map(carMapper::toDto).toList();

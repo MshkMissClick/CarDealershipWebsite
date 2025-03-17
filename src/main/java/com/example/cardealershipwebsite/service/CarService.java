@@ -8,7 +8,6 @@ import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -128,22 +127,44 @@ public class CarService {
         }
     }
 
-    public List<CarDto> filterCars(String brandName, String bodyType) {
-        String key = (brandName != null ? brandName : "ANY") + "_" + (bodyType != null ? bodyType : "ANY");
+    /** Filter by brand. */
+    public List<CarDto> filterCarsByBrand(String brandName) {
+        String key = (brandName != null ? brandName : "ANY");
         if (carFilterCache.containsKey(key)) {
-            log.info("[CACHE]: Cache hit for filter: brand='{}', bodyType='{}'", brandName, bodyType);
+            log.info("[CACHE]: Cache hit for filter: brand='{}'", brandName);
             return carFilterCache.get(key);
         }
 
-        log.info("[CACHE]: Cache miss for filter: brand='{}', bodyType='{}'. Querying DB.", brandName, bodyType);
+        log.info("[CACHE]: Cache miss for filter: brand='{}'. Querying DB.", brandName);
 
-        List<CarDto> filteredCars = carRepository.findCarsByBrandNameAndBodyType(brandName, bodyType)
+        List<CarDto> filteredCars = carRepository.findCarsByBrandName(brandName)
                 .stream()
                 .map(carMapper::toDto)
                 .toList();
 
         carFilterCache.put(key, filteredCars);
-        log.info("[CACHE]: Cache populated for filter: brand='{}', bodyType='{}'", brandName, bodyType);
+        log.info("[CACHE]: Cache populated for filter: brand='{}'", brandName);
+
+        return filteredCars;
+    }
+
+    /** Filter by body type. */
+    public List<CarDto> filterCarsByBodyType(String bodyType) {
+        String key = (bodyType != null ? bodyType : "ANY");
+        if (carFilterCache.containsKey(key)) {
+            log.info("[CACHE]: Cache hit for filter: bodyType='{}'", bodyType);
+            return carFilterCache.get(key);
+        }
+
+        log.info("[CACHE]: Cache miss for filter: bodyType='{}'. Querying DB.", bodyType);
+
+        List<CarDto> filteredCars = carRepository.findCarsByBodyType(bodyType)
+                .stream()
+                .map(carMapper::toDto)
+                .toList();
+
+        carFilterCache.put(key, filteredCars);
+        log.info("[CACHE]: Cache populated for filter: bodyType='{}'", bodyType);
 
         return filteredCars;
     }

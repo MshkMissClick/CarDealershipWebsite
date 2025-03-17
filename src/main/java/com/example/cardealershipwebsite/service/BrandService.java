@@ -1,14 +1,13 @@
 package com.example.cardealershipwebsite.service;
 
 import com.example.cardealershipwebsite.dto.BrandDto;
-import com.example.cardealershipwebsite.model.Brand;
 import com.example.cardealershipwebsite.mapper.BrandMapper;
+import com.example.cardealershipwebsite.model.Brand;
 import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
-import java.util.List;
-
 import com.example.cardealershipwebsite.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -43,25 +42,20 @@ public class BrandService {
     public void deleteBrand(Long id) {
         Brand brand = brandRepository.findById(id).orElseThrow(() -> new RuntimeException("Brand not found"));
 
-        // Получаем все машины бренда
         List<Car> cars = brand.getCars();
 
-        // Для каждой машины
         for (Car car : cars) {
-            // Удаляем машину из заказов
             User user = car.getUserWhoOrdered();
             if (user != null) {
                 user.getOrders().remove(car);
             }
 
-            // Удаляем машину из favorites у всех пользователей
-            List<User> users = userRepository.findAll(); // нужно добавить userRepository
+            List<User> users = userRepository.findAll();
             for (User u : users) {
                 u.getFavorites().remove(car);
             }
         }
 
-        // Теперь можно удалить бренд (машины удалятся каскадно)
         brandRepository.delete(brand);
     }
 }

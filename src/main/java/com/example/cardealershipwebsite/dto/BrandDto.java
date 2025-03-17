@@ -1,9 +1,9 @@
 package com.example.cardealershipwebsite.dto;
 
+import java.util.List;
 import lombok.Data;
 
-import java.util.List;
-
+/** Data. */
 @Data
 public class BrandDto {
     private Long id;

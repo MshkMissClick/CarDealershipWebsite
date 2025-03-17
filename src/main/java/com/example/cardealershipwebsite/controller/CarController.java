@@ -1,11 +1,18 @@
 package com.example.cardealershipwebsite.controller;
 
 import com.example.cardealershipwebsite.dto.CarDto;
-import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.service.CarService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /** Car Controller. */
 @RestController
@@ -60,12 +67,18 @@ public class CarController {
         return ResponseEntity.ok(userId);
     }
 
-    @GetMapping("/filter")
-    public List<CarDto> filterCars(
-            @RequestParam(required = false) String brandName,
-            @RequestParam(required = false) String bodyType
-    ) {
-        return carService.filterCars(brandName, bodyType);
+    /** Filter by brand. */
+    @GetMapping("/filter-by-brand")
+    public List<CarDto> filterCarsByBrand(
+            @RequestParam(required = false) String brandName) {
+        return carService.filterCarsByBrand(brandName);
+    }
+
+    /** Filter by body type. */
+    @GetMapping("/filter-by-bodytype")
+    public List<CarDto> filterCarsByBodyType(
+            @RequestParam(required = false) String bodyType) {
+        return carService.filterCarsByBodyType(bodyType);
     }
 
 }

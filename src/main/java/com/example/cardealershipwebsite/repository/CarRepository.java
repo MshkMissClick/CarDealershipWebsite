@@ -11,11 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CarRepository extends JpaRepository<Car, Long> {
     /** JPQL. */
-    @Query("SELECT c FROM Car c WHERE (:brandName IS NULL OR c.brand.name = :brandName)")
-    List<Car> findCarsByBrandName(
-            @Param("brandName") String brandName
-
-    );
+    @Query("SELECT c FROM Car c JOIN c.brand b WHERE b.name = :brandName")
+    List<Car> findCarsByBrandName(@Param("brandName") String brandName);
 
     /** Native Query. */
     @Query(value = "SELECT * FROM cars WHERE (:bodyType IS NULL OR body_type = :bodyType)", nativeQuery = true)

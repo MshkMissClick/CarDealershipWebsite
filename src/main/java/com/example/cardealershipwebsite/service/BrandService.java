@@ -8,16 +8,20 @@ import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /** Brand repos. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BrandService {
     private final BrandMapper brandMapper;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
+    private final Map<String, List<Car>> carFilterCache;
 
     public List<BrandDto> getAllBrands() {
         return brandRepository.findAll().stream()
@@ -54,8 +58,23 @@ public class BrandService {
             for (User u : users) {
                 u.getFavorites().remove(car);
             }
+
+            // Очистка кэша для удаленных машин
+            clearCacheForCar(car);
         }
 
         brandRepository.delete(brand);
+        log.info("[CACHE]: Cache cleared for deleted brand '{}'", brand.getName());
+    }
+
+    /** Очистка кэша по машине. */
+    private void clearCacheForCar(Car car) {
+        String brandKey = car.getBrand().getName();
+        String bodyTypeKey = car.getBodyType();
+
+        log.info("[CACHE]: Removing cache for brand='{}' and bodyType='{}'", brandKey, bodyTypeKey);
+
+        carFilterCache.remove(brandKey);
+        carFilterCache.remove(bodyTypeKey);
     }
 }

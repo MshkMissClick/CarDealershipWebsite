@@ -39,23 +39,31 @@ public class CarService {
     public CarDto createCar(CarDto carDto) {
         Car car = carMapper.toEntity(carDto);
         if (carDto.getUserWhoOrdered() != null) {
-            User user = userRepository.findById(carDto.getUserWhoOrdered().getId()).orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepository.findById(carDto.getUserWhoOrdered().getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             car.setUserWhoOrdered(user);
         }
         CarDto savedCar = carMapper.toDto(carRepository.save(car));
-        log.info("[CACHE]: New car created: {}. Clearing cache.", savedCar);
-        carFilterCache.clear(); // Очищаем кэш
+
+        log.info("[CACHE]: New car created: {}. Clearing affected cache.", savedCar);
+        clearCacheForCar(savedCar);
+
         return savedCar;
     }
 
     /** Обновление машины. */
     public Optional<CarDto> updateCar(Long id, CarDto carDto) {
         return carRepository.findById(id).map(car -> {
+            // Сохраняем старые значения для очистки кэша
+            String oldBrand = car.getBrand() != null ? car.getBrand().getName() : null;
+            String oldBodyType = car.getBodyType();
+
             updateCarAttributes(car, carDto);
             CarDto updatedCar = carMapper.toDto(carRepository.save(car));
 
-            log.info("[CACHE]: Car updated (ID={}): {}. Clearing cache.", id, updatedCar);
-            carFilterCache.clear(); // Очищаем кэш после обновления
+            log.info("[CACHE]: Car updated (ID={}): {}. Clearing affected cache.", id, updatedCar);
+            clearCacheForValues(oldBrand, oldBodyType);
+            clearCacheForCar(updatedCar);
 
             return updatedCar;
         });
@@ -64,6 +72,9 @@ public class CarService {
     /** Удаление машины. */
     public void deleteCar(Long id) {
         carRepository.findById(id).ifPresent(car -> {
+            String brandName = car.getBrand() != null ? car.getBrand().getName() : null;
+            String bodyType = car.getBodyType();
+
             if (car.getUserWhoOrdered() != null) {
                 car.getUserWhoOrdered().getOrders().remove(car);
             }
@@ -73,8 +84,8 @@ public class CarService {
             userRepository.saveAll(usersWithCarInFavorites);
 
             carRepository.deleteById(id);
-            log.info("[CACHE]: Car deleted (ID={}). Clearing cache.", id);
-            carFilterCache.clear(); // Очищаем кэш
+            log.info("[CACHE]: Car deleted (ID={}). Clearing affected cache.", id);
+            clearCacheForValues(brandName, bodyType);
         });
     }
 
@@ -129,10 +140,9 @@ public class CarService {
 
     /** Filter by brand. */
     public List<CarDto> filterCarsByBrand(String brandName) {
-        String key = (brandName != null ? brandName : "ANY");
-        if (carFilterCache.containsKey(key)) {
+        if (carFilterCache.containsKey(brandName)) {
             log.info("[CACHE]: Cache hit for filter: brand='{}'", brandName);
-            return carFilterCache.get(key);
+            return carFilterCache.get(brandName);
         }
 
         log.info("[CACHE]: Cache miss for filter: brand='{}'. Querying DB.", brandName);
@@ -142,7 +152,7 @@ public class CarService {
                 .map(carMapper::toDto)
                 .toList();
 
-        carFilterCache.put(key, filteredCars);
+        carFilterCache.put(brandName, filteredCars);
         log.info("[CACHE]: Cache populated for filter: brand='{}'", brandName);
 
         return filteredCars;
@@ -150,10 +160,9 @@ public class CarService {
 
     /** Filter by body type. */
     public List<CarDto> filterCarsByBodyType(String bodyType) {
-        String key = (bodyType != null ? bodyType : "ANY");
-        if (carFilterCache.containsKey(key)) {
+        if (carFilterCache.containsKey(bodyType)) {
             log.info("[CACHE]: Cache hit for filter: bodyType='{}'", bodyType);
-            return carFilterCache.get(key);
+            return carFilterCache.get(bodyType);
         }
 
         log.info("[CACHE]: Cache miss for filter: bodyType='{}'. Querying DB.", bodyType);
@@ -163,9 +172,29 @@ public class CarService {
                 .map(carMapper::toDto)
                 .toList();
 
-        carFilterCache.put(key, filteredCars);
+        carFilterCache.put(bodyType, filteredCars);
         log.info("[CACHE]: Cache populated for filter: bodyType='{}'", bodyType);
 
         return filteredCars;
+    }
+
+    /** Очистка кэша по данным машины. */
+    private void clearCacheForCar(CarDto carDto) {
+        if (carDto.getBrand() != null) {
+            carFilterCache.remove(carDto.getBrand());
+        }
+        if (carDto.getBodyType() != null) {
+            carFilterCache.remove(carDto.getBodyType());
+        }
+    }
+
+    /** Очистка кэша по конкретным значениям. */
+    private void clearCacheForValues(String brandName, String bodyType) {
+        if (brandName != null) {
+            carFilterCache.remove(brandName);
+        }
+        if (bodyType != null) {
+            carFilterCache.remove(bodyType);
+        }
     }
 }

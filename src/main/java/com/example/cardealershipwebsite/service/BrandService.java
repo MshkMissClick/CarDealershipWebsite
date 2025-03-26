@@ -1,6 +1,7 @@
 package com.example.cardealershipwebsite.service;
 
 import com.example.cardealershipwebsite.dto.BrandDto;
+import com.example.cardealershipwebsite.dto.CarDto;
 import com.example.cardealershipwebsite.mapper.BrandMapper;
 import com.example.cardealershipwebsite.model.Brand;
 import com.example.cardealershipwebsite.model.Car;
@@ -9,19 +10,28 @@ import com.example.cardealershipwebsite.repository.BrandRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** Brand repos. */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BrandService {
     private final BrandMapper brandMapper;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
-    private final Map<String, List<Car>> carFilterCache;
+    private final Map<String, List<CarDto>> carFilterCache;
+
+    /** Constructor. */
+    @Autowired
+    public BrandService(BrandRepository brandRepository, UserRepository userRepository, BrandMapper brandMapper,
+                        Map<String, List<CarDto>> carFilterCache) {
+        this.brandRepository = brandRepository;
+        this.userRepository = userRepository;
+        this.brandMapper = brandMapper;
+        this.carFilterCache = carFilterCache;
+    }
 
     public List<BrandDto> getAllBrands() {
         return brandRepository.findAll().stream()

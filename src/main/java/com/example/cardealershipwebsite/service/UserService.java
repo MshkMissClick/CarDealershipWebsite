@@ -87,7 +87,6 @@ public class UserService {
         // Проверка, что у машины нет заказчика
         if (car.getUserWhoOrdered() != null) {
             throw new IllegalStateException("У машины уже есть заказчик.");
-
         }
 
         car.setUserWhoOrdered(user);

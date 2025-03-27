@@ -72,8 +72,8 @@ public class CarService {
     /** Удаление машины. */
     public void deleteCar(Long id) {
         carRepository.findById(id).ifPresent(car -> {
-            String brandName = car.getBrand() != null ? car.getBrand().getName() : null;
-            String bodyType = car.getBodyType();
+            final String brandName = car.getBrand() != null ? car.getBrand().getName() : null;
+            final String bodyType = car.getBodyType();
 
             if (car.getUserWhoOrdered() != null) {
                 car.getUserWhoOrdered().getOrders().remove(car);

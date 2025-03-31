@@ -1,11 +1,15 @@
 package com.example.cardealershipwebsite.service;
 
 import com.example.cardealershipwebsite.dto.UserDto;
+import com.example.cardealershipwebsite.dto.UserUpdateDto;
+import com.example.cardealershipwebsite.exception.PasswordHashingException;
+import com.example.cardealershipwebsite.exception.UserUpdateException;
 import com.example.cardealershipwebsite.mapper.UserMapper;
 import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -45,19 +49,32 @@ public class UserService {
     }
 
     /** Обновление юзера.*/
-    public Optional<UserDto> updateUser(Long id, UserDto userDto) {
-        return userRepository.findById(id).map(user -> {
-            if (userDto.getName() != null) {
-                user.setName(userDto.getName());
-            }
-            if (userDto.getEmail() != null) {
-                user.setEmail(userDto.getEmail());
-            }
-            if (user.getPasswordHash() != null) {
-                user.setPasswordHash(user.getPasswordHash());
-            }
-            return userMapper.toDto(userRepository.save(user));
-        });
+    @Transactional
+    public UserDto updateUser(Long id, UserUpdateDto userUpdateDto) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    if (userUpdateDto.getEmail() != null) {
+                        if (userUpdateDto.getEmail().isBlank()) {
+                            throw new UserUpdateException("Адрес почты не может быть пустым.");
+                        }
+                        user.setEmail(userUpdateDto.getEmail());
+                    }
+                    if (userUpdateDto.getName() != null) {
+                        if (userUpdateDto.getName().isBlank()) {
+                            throw new UserUpdateException("Имя не может быть пустым.");
+                        }
+                        user.setName(userUpdateDto.getName());
+                    }
+                    if (userUpdateDto.getPasswordHash() != null) {
+                        try {
+                            user.setPasswordHash(hashPassword(userUpdateDto.getPasswordHash()));
+                        } catch (NoSuchAlgorithmException e) {
+                            throw new PasswordHashingException("Ошибка хеширования пароля", e);
+                        }
+                    }
+                    return userMapper.toDto(userRepository.save(user));
+                })
+                .orElseThrow(() -> new UserUpdateException("Пользователь с ID " + id + " не найден."));
     }
 
     /** Удаление юзера. */

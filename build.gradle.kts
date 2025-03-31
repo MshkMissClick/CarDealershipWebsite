@@ -17,8 +17,6 @@ repositories {
 	mavenCentral()
 }
 
-extra["springdocVersion"] = "2.8.5"
-
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("jakarta.persistence:jakarta.persistence-api")
@@ -27,7 +25,7 @@ dependencies {
 	implementation("org.postgresql:postgresql")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-aop")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${extra["springdocVersion"]}")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
 	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

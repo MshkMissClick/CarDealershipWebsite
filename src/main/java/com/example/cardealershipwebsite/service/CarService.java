@@ -1,6 +1,7 @@
 package com.example.cardealershipwebsite.service;
 
 import com.example.cardealershipwebsite.dto.CarDto;
+import com.example.cardealershipwebsite.dto.CarUpdateDto;
 import com.example.cardealershipwebsite.mapper.CarMapper;
 import com.example.cardealershipwebsite.model.Brand;
 import com.example.cardealershipwebsite.model.Car;
@@ -8,9 +9,11 @@ import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
 import com.example.cardealershipwebsite.repository.CarRepository;
 import com.example.cardealershipwebsite.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,23 +54,69 @@ public class CarService {
         return savedCar;
     }
 
-    /** Обновление машины. */
-    public Optional<CarDto> updateCar(Long id, CarDto carDto) {
-        return carRepository.findById(id).map(car -> {
-            // Сохраняем старые значения для очистки кэша
-            String oldBrand = car.getBrand() != null ? car.getBrand().getName() : null;
-            String oldBodyType = car.getBodyType();
-
-            updateCarAttributes(car, carDto);
-            CarDto updatedCar = carMapper.toDto(carRepository.save(car));
-
-            log.info("[CACHE]: Car updated (ID={}): {}. Clearing affected cache.", id, updatedCar);
-            clearCacheForValues(oldBrand, oldBodyType);
-            clearCacheForCar(updatedCar);
-
-            return updatedCar;
-        });
+    /** Обновление данных автомобиля. */
+    @Transactional
+    public CarDto updateCar(Long id, CarUpdateDto carDto) {
+        return carRepository.findById(id)
+                .map(car -> {
+                    boolean updated = updateCarAttributes(car, carDto);
+                    if (!updated) {
+                        throw new IllegalArgumentException("Не передано корректного поля для обновления");
+                    }
+                    return carMapper.toDto(carRepository.save(car));
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Автомобиль с ID " + id + " не найден"));
     }
+
+    /** Обновление атрибутов автомобиля. */
+    private boolean updateCarAttributes(Car car, CarUpdateDto carDto) {
+        boolean updated = false;
+
+        updated |= updateIfValid(carDto.getBrand(), brand -> car.setBrand(brandRepository.findByName(brand)));
+        updated |= updateIfValid(carDto.getModel(), car::setModel);
+        updated |= updateIfValid(carDto.getYear(), year -> car.setYear(year > 0 ? year : null));
+        updated |= updateIfValid(carDto.getBodyType(), car::setBodyType);
+        updated |= updateIfValid(carDto.getColor(), car::setColor);
+        updated |= updateIfValid(carDto.getTransmission(), car::setTransmission);
+        updated |= updateIfValid(carDto.getFuelType(), car::setFuelType);
+        updated |= updateIfValid(carDto.getPower(), power -> {
+            if (power > 0) {
+                car.setPower(power);
+            }
+        });
+        updated |= updateIfValid(carDto.getEngineVolume(), volume -> {
+            if (volume > 0) {
+                car.setEngineVolume(volume);
+            }
+        });
+        updated |= updateIfValid(carDto.getFuelConsumption(), consumption -> {
+            if (consumption > 0) {
+                car.setFuelConsumption(consumption);
+            }
+        });
+        updated |= updateIfValid(carDto.getTrunkVolume(), volume -> {
+            if (volume > 0) {
+                car.setTrunkVolume(volume);
+            }
+        });
+        updated |= updateIfValid(carDto.getPrice(), price -> {
+            if (price > 0) {
+                car.setPrice(price);
+            }
+        });
+
+        return updated;
+    }
+
+    /** Вспомогательный метод для обновления поля, если оно валидное. */
+    private <T> boolean updateIfValid(T value, Consumer<T> updater) {
+        if (value != null && (!(value instanceof String string) || !string.isBlank())) {
+            updater.accept(value);
+            return true;
+        }
+        return false;
+    }
+
 
     /** Удаление машины. */
     public void deleteCar(Long id) {
@@ -93,49 +142,6 @@ public class CarService {
     public Optional<Long> getUserIdWhoOrderedCar(Long carId) {
         return carRepository.findById(carId)
                 .map(car -> car.getUserWhoOrdered() != null ? car.getUserWhoOrdered().getId() : null);
-    }
-
-    /** Обновление атрибутов машины. */
-    private void updateCarAttributes(Car car, CarDto carDto) {
-        if (carDto.getBrand() != null) {
-            Brand brand = brandRepository.findByName(carDto.getBrand());
-            if (brand != null) {
-                car.setBrand(brand);
-            }
-        }
-        if (carDto.getModel() != null) {
-            car.setModel(carDto.getModel());
-        }
-        if (carDto.getYear() != null) {
-            car.setYear(carDto.getYear());
-        }
-        if (carDto.getBodyType() != null) {
-            car.setBodyType(carDto.getBodyType());
-        }
-        if (carDto.getColor() != null) {
-            car.setColor(carDto.getColor());
-        }
-        if (carDto.getTransmission() != null) {
-            car.setTransmission(carDto.getTransmission());
-        }
-        if (carDto.getFuelType() != null) {
-            car.setFuelType(carDto.getFuelType());
-        }
-        if (carDto.getPower() != 0) {
-            car.setPower(carDto.getPower());
-        }
-        if (carDto.getEngineVolume() != 0) {
-            car.setEngineVolume(carDto.getEngineVolume());
-        }
-        if (carDto.getFuelConsumption() != 0) {
-            car.setFuelConsumption(carDto.getFuelConsumption());
-        }
-        if (carDto.getTrunkVolume() != 0) {
-            car.setTrunkVolume(carDto.getTrunkVolume());
-        }
-        if (carDto.getPrice() != 0) {
-            car.setPrice(carDto.getPrice());
-        }
     }
 
     /** Filter by brand. */

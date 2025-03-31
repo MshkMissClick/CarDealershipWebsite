@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,16 +39,13 @@ public class LogController {
             description = "Возвращает лог-файл для указанной даты. Если файл не найден, возвращается ошибка 404.")
     @GetMapping("/{date}")
     public ResponseEntity<byte[]> getLogFile(
-            @Parameter(description = "Дата в формате YYYY-MM-DD") @PathVariable String date) {
+            @Parameter(description = "Дата в формате YYYY-MM-DD") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         try {
-            // Получаем временный лог-файл по дате
             File logFile = logService.getLogFile(date);
             Path logFilePath = logFile.toPath();
 
-            // Читаем файл в байты
             byte[] logFileBytes = Files.readAllBytes(logFilePath);
 
-            // Формируем ответ с файлом
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + logFile.getName());
 
@@ -55,7 +54,6 @@ public class LogController {
                     .headers(headers)
                     .body(logFileBytes);
         } catch (IOException e) {
-            // Возвращаем ошибку, если файл не найден или произошла ошибка
             String errorMessage = "{\"error\":\"Log file not found for the specified date: " + date + "\"}";
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.APPLICATION_JSON)

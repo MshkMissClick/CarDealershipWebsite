@@ -43,4 +43,28 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    /** Handler for IllegalArgumentException. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        logger.error("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    /** Handler for UserUpdateException. */
+    @ExceptionHandler(UserUpdateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleUserUpdateException(UserUpdateException ex) {
+        logger.error("User update error: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    /** Handler for Password. */
+    @ExceptionHandler(PasswordHashingException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handlePasswordHashingException(PasswordHashingException ex) {
+        logger.error("Ошибка хеширования пароля: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Внутренняя ошибка сервера при хешировании пароля.");
+    }
 }

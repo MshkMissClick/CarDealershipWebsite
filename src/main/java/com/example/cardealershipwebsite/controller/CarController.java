@@ -1,6 +1,7 @@
 package com.example.cardealershipwebsite.controller;
 
 import com.example.cardealershipwebsite.dto.CarDto;
+import com.example.cardealershipwebsite.dto.CarUpdateDto;
 import com.example.cardealershipwebsite.service.CarService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -66,13 +67,13 @@ public class CarController {
     @Operation(summary = "Обновить данные автомобиля", description = "Обновляет информацию об автомобиле по его ID.")
     @PatchMapping("/{id}")
     public ResponseEntity<CarDto> updateCar(
-            @Parameter(description = "ID автомобиля", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Обновленные данные автомобиля", required = true)
-            @Valid @RequestBody CarDto carDto
+            @Parameter(description = "ID автомобиля", required = true) @PathVariable Long id,
+            @Parameter(description = "Обновленные данные автомобиля", required = true) @RequestBody CarUpdateDto carDto
     ) {
-        return ResponseEntity.of(carService.updateCar(id, carDto));
+        CarDto updatedCar = carService.updateCar(id, carDto);
+        return ResponseEntity.ok(updatedCar);
     }
+
 
     /** Удалить машину. */
     @Operation(summary = "Удалить автомобиль", description = "Удаляет автомобиль из системы по его ID.")

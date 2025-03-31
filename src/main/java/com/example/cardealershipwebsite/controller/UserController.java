@@ -1,9 +1,12 @@
 package com.example.cardealershipwebsite.controller;
 
 import com.example.cardealershipwebsite.dto.UserDto;
+import com.example.cardealershipwebsite.dto.UserUpdateDto;
 import com.example.cardealershipwebsite.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -57,16 +60,15 @@ public class UserController {
         return ResponseEntity.ok(userService.createUser(userDto));
     }
 
-    /** Обновить пользователя. */
-    @Operation(summary = "Обновить данные пользователя", description = "Обновляет информацию о пользователе по его ID.")
+    /** Update user. */
+    @Operation(summary = "Обновить пользователя", description = "Обновляет данные пользователя по указанному ID")
+    @ApiResponses(value = {
+        @ApiResponse (responseCode = "200", description = "Пользователь успешно обновлён"),
+        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     @PatchMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(
-            @Parameter(description = "ID пользователя", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Обновленные данные пользователя", required = true)
-            @Valid @RequestBody UserDto userDto
-    ) {
-        return ResponseEntity.of(userService.updateUser(id, userDto));
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDto userUpdateDto) {
+        return ResponseEntity.ok(userService.updateUser(id, userUpdateDto));
     }
 
     /** Удалить пользователя. */

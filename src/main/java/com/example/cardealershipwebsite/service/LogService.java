@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class LogService {
 
     /** Get log file. */
-    public File getLogFile(String date) throws IOException {
+    public File getLogFile(LocalDate localDate) throws IOException {
         // Получаем текущую дату или переданную дату
-        LocalDate logDate = date != null ? LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE) : LocalDate.now();
+        String date = localDate.format(DateTimeFormatter.ISO_DATE);
+
+        LocalDate logDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
         String logFileName = "application.log";
 
         // Путь к лог-файлу

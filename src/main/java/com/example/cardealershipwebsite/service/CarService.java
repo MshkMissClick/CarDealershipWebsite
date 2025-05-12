@@ -3,7 +3,6 @@ package com.example.cardealershipwebsite.service;
 import com.example.cardealershipwebsite.dto.CarDto;
 import com.example.cardealershipwebsite.dto.CarUpdateDto;
 import com.example.cardealershipwebsite.mapper.CarMapper;
-import com.example.cardealershipwebsite.model.Brand;
 import com.example.cardealershipwebsite.model.Car;
 import com.example.cardealershipwebsite.model.User;
 import com.example.cardealershipwebsite.repository.BrandRepository;
@@ -13,7 +12,6 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,63 +57,82 @@ public class CarService {
     public CarDto updateCar(Long id, CarUpdateDto carDto) {
         return carRepository.findById(id)
                 .map(car -> {
-                    boolean updated = updateCarAttributes(car, carDto);
+                    boolean updated = updateCarBasicAttributes(car, carDto);
+                    updated |= updateCarTechnicalAttributes(car, carDto);
+
                     if (!updated) {
                         throw new IllegalArgumentException("Не передано корректного поля для обновления");
                     }
+
                     return carMapper.toDto(carRepository.save(car));
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Автомобиль с ID " + id + " не найден"));
     }
 
-    /** Обновление атрибутов автомобиля. */
-    private boolean updateCarAttributes(Car car, CarUpdateDto carDto) {
+    /** Обновление основных атрибутов автомобиля. */
+    public boolean updateCarBasicAttributes(Car car, CarUpdateDto carDto) {
         boolean updated = false;
 
-        updated |= updateIfValid(carDto.getBrand(), brand -> car.setBrand(brandRepository.findByName(brand)));
-        updated |= updateIfValid(carDto.getModel(), car::setModel);
-        updated |= updateIfValid(carDto.getYear(), year -> car.setYear(year > 0 ? year : null));
-        updated |= updateIfValid(carDto.getBodyType(), car::setBodyType);
-        updated |= updateIfValid(carDto.getColor(), car::setColor);
-        updated |= updateIfValid(carDto.getTransmission(), car::setTransmission);
-        updated |= updateIfValid(carDto.getFuelType(), car::setFuelType);
-        updated |= updateIfValid(carDto.getPower(), power -> {
-            if (power > 0) {
-                car.setPower(power);
-            }
-        });
-        updated |= updateIfValid(carDto.getEngineVolume(), volume -> {
-            if (volume > 0) {
-                car.setEngineVolume(volume);
-            }
-        });
-        updated |= updateIfValid(carDto.getFuelConsumption(), consumption -> {
-            if (consumption > 0) {
-                car.setFuelConsumption(consumption);
-            }
-        });
-        updated |= updateIfValid(carDto.getTrunkVolume(), volume -> {
-            if (volume > 0) {
-                car.setTrunkVolume(volume);
-            }
-        });
-        updated |= updateIfValid(carDto.getPrice(), price -> {
-            if (price > 0) {
-                car.setPrice(price);
-            }
-        });
+        if (carDto.getBrand() != null && !carDto.getBrand().isBlank()) {
+            car.setBrand(brandRepository.findByName(carDto.getBrand()));
+            updated = true;
+        }
+        if (carDto.getModel() != null && !carDto.getModel().isBlank()) {
+            car.setModel(carDto.getModel());
+            updated = true;
+        }
+        if (carDto.getYear() != null && carDto.getYear() > 0) {
+            car.setYear(carDto.getYear());
+            updated = true;
+        }
+        if (carDto.getBodyType() != null && !carDto.getBodyType().isBlank()) {
+            car.setBodyType(carDto.getBodyType());
+            updated = true;
+        }
+        if (carDto.getColor() != null && !carDto.getColor().isBlank()) {
+            car.setColor(carDto.getColor());
+            updated = true;
+        }
+        if (carDto.getTransmission() != null) {
+            car.setTransmission(carDto.getTransmission());
+            updated = true;
+        }
+        if (carDto.getFuelType() != null) {
+            car.setFuelType(carDto.getFuelType());
+            updated = true;
+        }
 
         return updated;
     }
 
-    /** Вспомогательный метод для обновления поля, если оно валидное. */
-    private <T> boolean updateIfValid(T value, Consumer<T> updater) {
-        if (value != null && (!(value instanceof String string) || !string.isBlank())) {
-            updater.accept(value);
-            return true;
+    /** Обновление технических характеристик автомобиля. */
+    public boolean updateCarTechnicalAttributes(Car car, CarUpdateDto carDto) {
+        boolean updated = false;
+
+        if (carDto.getPower() > 0) {
+            car.setPower(carDto.getPower());
+            updated = true;
         }
-        return false;
+        if (carDto.getEngineVolume() > 0) {
+            car.setEngineVolume(carDto.getEngineVolume());
+            updated = true;
+        }
+        if (carDto.getFuelConsumption() > 0) {
+            car.setFuelConsumption(carDto.getFuelConsumption());
+            updated = true;
+        }
+        if (carDto.getTrunkVolume() > 0) {
+            car.setTrunkVolume(carDto.getTrunkVolume());
+            updated = true;
+        }
+        if (carDto.getPrice() > 0) {
+            car.setPrice(carDto.getPrice());
+            updated = true;
+        }
+
+        return updated;
     }
+
 
 
     /** Удаление машины. */

@@ -1,5 +1,6 @@
 package com.example.cardealershipwebsite.service;
 
+import com.example.cardealershipwebsite.dto.UserCarIdDto;
 import com.example.cardealershipwebsite.dto.UserDto;
 import com.example.cardealershipwebsite.dto.UserUpdateDto;
 import com.example.cardealershipwebsite.exception.PasswordHashingException;
@@ -192,6 +193,20 @@ public class UserService {
             hexString.append(String.format("%02x", b)); // преобразуем байты в строку в шестнадцатеричном формате
         }
         return hexString.toString();
+    }
+
+    public List<UserCarIdDto> getAllUserFavorites() {
+        return userRepository.findAll().stream()
+                .flatMap(user -> user.getFavorites().stream()
+                        .map(car -> new UserCarIdDto(user.getId(), car.getId())))
+                .toList();
+    }
+
+    public List<UserCarIdDto> getAllUserOrders() {
+        return userRepository.findAll().stream()
+                .flatMap(user -> user.getOrders().stream()
+                        .map(order -> new UserCarIdDto(user.getId(), order.getId())))
+                .toList();
     }
 
 }

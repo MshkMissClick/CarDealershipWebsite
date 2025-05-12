@@ -1,5 +1,6 @@
 package com.example.cardealershipwebsite.controller;
 
+import com.example.cardealershipwebsite.dto.UserCarIdDto;
 import com.example.cardealershipwebsite.dto.UserDto;
 import com.example.cardealershipwebsite.dto.UserUpdateDto;
 import com.example.cardealershipwebsite.service.UserService;
@@ -153,4 +154,17 @@ public class UserController {
         userService.removeCarFromFavorites(userId, carId);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Получить список всех избранных автомобилей всех пользователей", description = "Возвращает список объектов userId и carId для всех избранных автомобилей.")
+    @GetMapping("/favorites")
+    public ResponseEntity<List<UserCarIdDto>> getAllUserFavorites() {
+        return ResponseEntity.ok(userService.getAllUserFavorites());
+    }
+
+    @Operation(summary = "Получить список всех заказов всех пользователей", description = "Возвращает список объектов userId и carId для всех заказов.")
+    @GetMapping("/orders")
+    public ResponseEntity<List<UserCarIdDto>> getAllUserOrders() {
+        return ResponseEntity.ok(userService.getAllUserOrders());
+    }
+
 }
